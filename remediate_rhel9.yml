@@ -1,14 +1,15 @@
 ---
-- name: Wait for connection...
-  ansible.builtin.wait_for_connection:
-    connect_timeout: 20
-    sleep: 5
-    delay: 5
-    timeout: 300
+- block:
+    - name: Wait for connection...
+      ansible.builtin.wait_for_connection:
+        connect_timeout: 20
+        sleep: 5
+        delay: 5
+        timeout: 300
 
-- name: Check for leapp utility
-  ansible.builtin.stat:
-    path: /usr/bin/leapp
-  register: leapp_utility_check
-
+    - name: Check for leapp utility
+      ansible.builtin.stat:
+        path: /usr/bin/leapp
+      register: leapp_utility_check
+  when: ansible_distribution_major_version | int == 9
 ...

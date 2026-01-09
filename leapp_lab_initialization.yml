@@ -31,12 +31,52 @@
         regexp: '(?i)^\s*gpgcheck\s*=\s*1\s*$'
         replace: 'gpgcheck = 0'
 
-
     - name: Install interesting packages
       ansible.builtin.package:
         name: glibc-langpack-en
         state: present
       ignore_errors: yes
+
+    - name: Add a remote root login with password that will cause a RHEL 8 inhibitor
+      ansible.builtin.lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regex: "^(#)?{{ item.key }}"
+        line: "{{ item.key }} {{ item.value }}"
+        state: present
+      loop:
+        - {key: "PermitRootLogin", value: "yes"}
+        - {key: "PasswordAuthentication", value: "yes"}
+      notify:
+        - Restart sshd
+      when: ansible_distribution_major_version | int == 8
+
+    - block:
+        - name: Install nfs-utils package
+          ansible.builtin.package:
+            name: nfs-utils
+            state: present
+        - name: Add dummy entry in fstab with NFS
+          ansible.builtin.lineinfile:
+            path: /etc/fstab
+            line: "rhpds-lab:/nfs/storage /nfsmnt nfs nofail,nobootwait,_netdev 0 0"
+        - name: missing_efibootmgr | Uninstall the package
+          ansible.builtin.package:
+            name: efibootmgr
+            state: absent
+        - name: corrupted_grubenv_file | Copy corrupted grub file
+          ansible.builtin.copy:
+            dest: "/boot/grub.conf"
+            content: "All your base are belong to us"
+        - name: cifs_detected | Install cifs-utils package
+          ansible.builtin.package:
+            name: cifs-utils
+            state: present
+        - name: cifs_detected | Add dummy entry in fstab with CIFS
+          ansible.builtin.lineinfile:
+            path: /etc/fstab
+            line: "//bontregerdev/storage /mnt cifs nofail,nobootwait,credentials=/root/smb.cred,_netdev 0 0"
+      when: ansible_distribution_major_version | int == 7
+        
 
   handlers:
     - name: Restart SSH

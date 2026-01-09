@@ -13,7 +13,7 @@
           ansible.builtin.import_role:
             name: infra.leapp.upgrade
           vars:
-            leapp_preupg_opts: "--no-rhsm --enablerepo=ripu-upgrade-rhel-{{ ansible_distribution_major_version | int + 1 }}-baseos --enablerepo=ripu-upgrade-rhel-{{ ansible_distribution_major_version | int + 1 }}-appstream"
+            leapp_upgrade_opts: "--no-rhsm --enablerepo=ripu-upgrade-rhel-{{ ansible_distribution_major_version | int + 1 }}-baseos --enablerepo=ripu-upgrade-rhel-{{ ansible_distribution_major_version | int + 1 }}-appstream"
             
       always:
         - name: Log upgrade status
