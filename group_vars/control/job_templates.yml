@@ -65,6 +65,7 @@ controller_templates:
             - rhel8
             - rhel9
           required: true
+    ask_variables_on_launch: true
   - name: OS / Upgrade
     project: Project Leapp
     playbook: upgrade.yml
