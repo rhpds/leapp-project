@@ -4,16 +4,21 @@
   strategy: free
   become: true
   force_handlers: true
-  # vars:
-  #   ansible_python_interpreter: /usr/libexec/platform-python
+  vars:
+    zz_rhel10_repo_workaround: ""
   tasks:
     - name: Upgrade block
       block:
+        - name: Set the repo workaround for RHEL 10
+          ansible.builtin.set_fact:
+            zz_rhel10_repo_workaround: "--enablerepo=ripu-upgrade-rhel-10-supplementary"
+          when: ansible_distribution_major_version | int == 9
+
         - name: Perform OS upgrade
           ansible.builtin.import_role:
             name: infra.leapp.upgrade
           vars:
-            leapp_upgrade_opts: "--no-rhsm --enablerepo=ripu-upgrade-rhel-{{ ansible_distribution_major_version | int + 1 }}-baseos --enablerepo=ripu-upgrade-rhel-{{ ansible_distribution_major_version | int + 1 }}-appstream"
+            leapp_upgrade_opts: "--no-rhsm {{ zz_rhel10_repo_workaround }} --enablerepo=ripu-upgrade-rhel-{{ ansible_distribution_major_version | int + 1 }}-baseos --enablerepo=ripu-upgrade-rhel-{{ ansible_distribution_major_version | int + 1 }}-appstream"
             
       always:
         - name: Log upgrade status
