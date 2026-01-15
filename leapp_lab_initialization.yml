@@ -36,6 +36,7 @@
         name: glibc-langpack-en
         state: present
       ignore_errors: yes
+      when: ansible_distribution_major_version | int in [8, 9]
 
     - name: Add a remote root login with password that will cause a RHEL 8 inhibitor
       ansible.builtin.lineinfile:
