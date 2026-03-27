@@ -147,7 +147,7 @@ controller_templates:
       - Workshop Credential
     extra_vars:
       shrink_lv_devices:
-        - device: /dev/mapper/VolGroup00-homeVol
+        - device: /dev/mapper/vg00-home
           size: 1G
     ask_variables_on_launch: true
     survey_enabled: true
@@ -396,8 +396,8 @@ controller_templates:
     ask_variables_on_launch: true
     extra_vars:
       filesystem_extend_volumes:
-        - vg: VolGroup00
-          lv: varVol
+        - vg: vg00
+          lv: var
           size: 8G
   - name: Z / SETUP / Miscellaneous host config
     project: Project Leapp
