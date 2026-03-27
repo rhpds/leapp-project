@@ -202,17 +202,17 @@ controller_templates:
       snapshot_create_snapshot_autoextend_percent: 20
       snapshot_create_boot_backup: true
       snapshot_create_volumes:
-        - vg: VolGroup00
-          lv: rootVol
+        - vg: vg00
+          lv: root
           size: 4G
-        - vg: VolGroup00
-          lv: varVol
+        - vg: vg00
+          lv: var
           size: 5G
-        - vg: VolGroup00
-          lv: logVol
+        - vg: vg00
+          lv: varlog
           size: 500M
-        - vg: VolGroup00
-          lv: auditVol
+        - vg: vg00
+          lv: varlogaudit
           size: 100M
     survey_enabled: true
     survey:
