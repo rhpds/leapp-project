@@ -31,6 +31,11 @@
         fail_msg: Total partition usage on {{ full_storage_device_name }} equals total size of the device.
         success_msg: Total partition usage on {{ full_storage_device_name }} is less than total size of the device.
 
+    - name: Package cloud-utils-growpart installed
+      ansible.builtin.package:
+        name: cloud-utils-growpart
+        state: present
+
     - name: Extend existing partition to fill all available space on device
       ansible.builtin.command: >-
         growpart {{ full_storage_device_name }} {{ storage_device_info.partitions | length }}
