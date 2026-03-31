@@ -19,18 +19,6 @@
       notify: Restart SSH
       when: ansible_distribution_major_version | int in [7, 8]
 
-    - name: Disable SSL for repos
-      ansible.builtin.replace:
-        path: "/etc/yum.repos.d/rhel{{ ansible_distribution_major_version | int + 1 }}-for-ripu.repo"
-        regexp: '(?i)^\s*sslverify\s*=\s*1\s*$'
-        replace: 'sslverify = 0'
-
-    - name: Disable GPG for repos
-      ansible.builtin.replace:
-        path: "/etc/yum.repos.d/rhel{{ ansible_distribution_major_version | int + 1 }}-for-ripu.repo"
-        regexp: '(?i)^\s*gpgcheck\s*=\s*1\s*$'
-        replace: 'gpgcheck = 0'
-
     - name: Install interesting packages
       ansible.builtin.package:
         name: glibc-langpack-en
