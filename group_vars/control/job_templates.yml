@@ -1,6 +1,6 @@
 ---
 controller_templates:
-  - name: Ansible Leapp Lab initailization
+  - name: Z / Ansible Leapp Lab initailization
     description: Initialize the Ansible Leapp Lab environment
     project: Project Leapp
     playbook: leapp_lab_initialization.yml
@@ -147,7 +147,7 @@ controller_templates:
       - Workshop Credential
     extra_vars:
       shrink_lv_devices:
-        - device: /dev/mapper/VolGroup00-homeVol
+        - device: /dev/mapper/vg00-home
           size: 1G
     ask_variables_on_launch: true
     survey_enabled: true
@@ -202,17 +202,17 @@ controller_templates:
       snapshot_create_snapshot_autoextend_percent: 20
       snapshot_create_boot_backup: true
       snapshot_create_volumes:
-        - vg: VolGroup00
-          lv: rootVol
+        - vg: vg00
+          lv: root
           size: 4G
-        - vg: VolGroup00
-          lv: varVol
+        - vg: vg00
+          lv: var
           size: 5G
-        - vg: VolGroup00
-          lv: logVol
+        - vg: vg00
+          lv: varlog
           size: 500M
-        - vg: VolGroup00
-          lv: auditVol
+        - vg: vg00
+          lv: varlogaudit
           size: 100M
     survey_enabled: true
     survey:
@@ -368,7 +368,7 @@ controller_templates:
     ask_limit_on_launch: true
     ask_variables_on_launch: true
     extra_vars:
-      full_storage_device_name: /dev/nvme0n1
+      full_storage_device_name: /dev/vda
       perform_resize: true
   - name: UTILITY / Extend logical volumes and filesystems
     project: Project Leapp
@@ -396,8 +396,8 @@ controller_templates:
     ask_variables_on_launch: true
     extra_vars:
       filesystem_extend_volumes:
-        - vg: VolGroup00
-          lv: varVol
+        - vg: vg00
+          lv: var
           size: 8G
   - name: Z / SETUP / Miscellaneous host config
     project: Project Leapp
@@ -436,7 +436,6 @@ controller_templates:
           Workshop: "{{ lookup('env', 'TOWER_HOST' ).split('.')[1] }}"
       student: "{{ lookup('env', 'TOWER_HOST').split('.')[0] | urlsplit('hostname') }}"
       workshop_dns_zone: "{{ lookup('env', 'TOWER_HOST').split('.',2)[2] }}"
-
   - name: Demo Job Template
     state: absent
 ...
