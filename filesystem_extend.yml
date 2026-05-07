@@ -13,5 +13,6 @@
         lv: "{{ item.lv }}"
         size: "{{ item.size | default(omit) }}"
         resizefs: true
+        shrink: false
       loop: "{{ filesystem_extend_volumes }}"
 ...
