@@ -26,6 +26,13 @@
       ignore_errors: yes
       when: ansible_distribution_major_version | int in [8, 9]
 
+    - name: Install vdo package
+      ansible.builtin.package:
+        name: vdo
+        state: present
+      ignore_errors: yes
+      when: ansible_distribution_major_version | int == 8
+
     - block:
         - name: Install nfs-utils package
           ansible.builtin.package:
