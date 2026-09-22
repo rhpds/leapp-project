@@ -2,17 +2,25 @@
 - name: Extend logical volumes and filesystems
   hosts: "{{ rhel_inventory_group | default(omit) }}"
   strategy: free
-  gather_facts: true
+  gather_facts: false
   become: true
   vars:
     filesystem_extend_volumes: []
   tasks:
-    - name: Extend logical volumes
-      community.general.lvol:
-        vg: "{{ item.vg }}"
-        lv: "{{ item.lv }}"
-        size: "{{ item.size | default(omit) }}"
-        resizefs: true
-        shrink: false
+    # community.general.lvol is avoided on purpose: recent releases use
+    # Python 3.7+ syntax that fails on the RHEL 7 (py2.7) and RHEL 8 (py3.6)
+    # workshop nodes. `lvextend --resizefs` works on every target Python.
+    - name: Extend logical volumes and grow their filesystems
+      ansible.builtin.command: >-
+        lvextend --resizefs --size {{ item.size }} /dev/{{ item.vg }}/{{ item.lv }}
       loop: "{{ filesystem_extend_volumes }}"
+      register: lvextend_output
+      changed_when: "'successfully resized' in (lvextend_output.stdout | default(''))"
+      # lvextend refuses to shrink; if the LV is already at/above the target
+      # size it exits non-zero with one of these messages, which is idempotent
+      # success for our purposes.
+      failed_when:
+        - lvextend_output.rc != 0
+        - "'matches existing size' not in (lvextend_output.stderr | default(''))"
+        - "'not larger than existing size' not in (lvextend_output.stderr | default(''))"
 ...

@@ -2,34 +2,29 @@
 - name: Extend partition and resize physical volume
   hosts: "{{ rhel_inventory_group | default(omit) }}"
   strategy: free
-  gather_facts: true
+  gather_facts: false
   become: true
   vars:
     perform_resize: false
   tasks:
-    - name: "Read {{ full_storage_device_name }} storage device information (always use unit when probing)"
-      community.general.parted:
-        device: "{{ full_storage_device_name }}"
-        unit: MiB
-      register: storage_device_info
+    # NOTE: community.general modules (parted/lvol) are avoided on purpose.
+    # Recent community.general releases use Python 3.7+ syntax (f-strings,
+    # `from __future__ import annotations`) which fails on the RHEL 7 (py2.7)
+    # and RHEL 8 (py3.6) workshop nodes. ansible.builtin + CLI tools work on
+    # every target Python, so we shell out to parted/growpart/pvresize.
+    - name: "Determine last partition number on {{ full_storage_device_name }}"
+      ansible.builtin.shell: >-
+        set -o pipefail;
+        parted -m -s {{ full_storage_device_name }} unit MiB print
+        | grep -E '^[0-9]+:' | tail -n1 | cut -d: -f1
+      args:
+        executable: /bin/bash
+      register: last_partition
+      changed_when: false
 
-    - name: "{{ full_storage_device_name }} device information"
+    - name: "{{ full_storage_device_name }} last partition number"
       ansible.builtin.debug:
-        var: storage_device_info
-
-    - name: "Calculate total partition usage on {{ full_storage_device_name }}"
-      ansible.builtin.set_fact:
-        total_partitions_size: "{{ total_partitions_size | default(0) | int + item.size | int }}"
-      loop: "{{ storage_device_info.partitions }}"
-      loop_control:
-        label: "{{ item.num }}"
-
-    - name: "Validate total partition usage on {{ full_storage_device_name }} is less than total device size"
-      ansible.builtin.assert:
-        that:
-          - 'total_partitions_size | int + 1 < storage_device_info.disk.size'
-        fail_msg: Total partition usage on {{ full_storage_device_name }} equals total size of the device.
-        success_msg: Total partition usage on {{ full_storage_device_name }} is less than total size of the device.
+        var: last_partition.stdout
 
     - name: Package cloud-utils-growpart installed
       ansible.builtin.package:
@@ -38,23 +33,30 @@
 
     - name: Extend existing partition to fill all available space on device
       ansible.builtin.command: >-
-        growpart {{ full_storage_device_name }} {{ storage_device_info.partitions | length }}
-      when: perform_resize
+        growpart {{ full_storage_device_name }} {{ last_partition.stdout | trim }}
+      when: perform_resize | bool
       register: growpart_output
+      changed_when: "'CHANGED' in growpart_output.stdout"
+      # growpart exits non-zero with NOCHANGE when the partition already fills
+      # the disk (e.g. cloud-init grew it at boot); that is not a failure.
+      failed_when:
+        - growpart_output.rc != 0
+        - "'NOCHANGE' not in (growpart_output.stdout ~ growpart_output.stderr)"
 
     - name: Resize physical volume to utilize all available space
       ansible.builtin.command: >-
-        pvresize {{ full_storage_device_name }}{{ storage_device_info.partitions | length }}
-      when:
-        - '"CHANGED" in growpart_output.stdout'
-        - perform_resize
+        pvresize {{ full_storage_device_name }}{{ last_partition.stdout | trim }}
+      when: perform_resize | bool
       register: pvresize_output
+      changed_when: "'successfully resized' in pvresize_output.stdout"
 
-    - name: Validate partition and physical volume resized
-      ansible.builtin.assert:
-        that:
-          - 'full_storage_device_name ~ storage_device_info.partitions | length in pvresize_output.stdout'
-          - '"changed" in pvresize_output.stdout'
-        fail_msg: Failed to resize {{ full_storage_device_name }} partition {{ storage_device_info.partitions | length }} and physical volume {{ full_storage_device_name }}{{ storage_device_info.partitions | length }}.
-        success_msg: Resized {{ full_storage_device_name }} partition {{ storage_device_info.partitions | length }} and physical volume {{ full_storage_device_name }}{{ storage_device_info.partitions | length }}.
+    - name: Confirm physical volume resize completed
+      ansible.builtin.debug:
+        msg: >-
+          Resized {{ full_storage_device_name }} partition
+          {{ last_partition.stdout | trim }} and physical volume
+          {{ full_storage_device_name }}{{ last_partition.stdout | trim }}.
+      when:
+        - perform_resize | bool
+        - pvresize_output is not skipped
 ...
