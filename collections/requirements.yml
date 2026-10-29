@@ -18,7 +18,7 @@ collections:
 - name: https://github.com/heatmiser/ansible-snapshot.git
   type: git
   version: main
-- name: https://github.com/swapdisk/bob_lvm_snapshots.git
+- name: https://github.com/redhat-cop/infra.lvm_snapshots.git
   type: git
-  version: fix_community_general
+  version: 8ecf95f135322c6e33ca39f367ffb919aeac20ef
 ...
