@@ -37,7 +37,7 @@ controller_workflows:
         all_parents_must_converge: false
         success_nodes: []
   - name: AUTO / 04 Commit
-    description: Workflow for Snapshot delete and Update instance tags
+    description: Workflow for Snapshot delete
     extra_vars:
       lvm_snapshots_action: remove
     inventory: Workshop Inventory
@@ -63,12 +63,6 @@ controller_workflows:
     simplified_workflow_nodes:
       - identifier: UTILITY / Snapshot Instance
         unified_job_template: UTILITY / Snapshot Instance
-        organization: Default
-        all_parents_must_converge: false
-        success_nodes:
-          - UTILITY / Set instance tags
-      - identifier: UTILITY / Set instance tags
-        unified_job_template: UTILITY / Set instance tags
         organization: Default
         all_parents_must_converge: false
         success_nodes: []
